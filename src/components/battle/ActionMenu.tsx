@@ -31,12 +31,13 @@ export function ActionMenu() {
   const {
     phase,
     hero,
+    progress,
     moveOrder,
     executeMove,
     heroMitigate,
     skipMitigation,
-    ageUp,
     toggleMoveManager,
+    toggleSkillTree,
   } = useBattleStore();
 
   if (phase === "hero_turn") {
@@ -70,17 +71,16 @@ export function ActionMenu() {
 
         <div className="flex gap-2 flex-wrap">
           <button
-            onClick={ageUp}
-            disabled={hero.age >= 90}
-            className="px-5 py-3 bg-panel border border-accent text-accent font-bold rounded-lg disabled:opacity-40"
+            onClick={toggleSkillTree}
+            className="px-5 py-3 bg-panel border border-purple-500 text-purple-400 font-bold rounded-lg"
           >
-            Cumplir 1 Año ({hero.age} → {hero.age + 1})
+            Árbol de Vida ({progress.seedsAvailable} Semillas)
           </button>
           <button
             onClick={toggleMoveManager}
             className="px-5 py-3 bg-panel border border-slate-600 text-slate-200 font-bold rounded-lg"
           >
-            Ordenar Movimientos
+            Ordenar
           </button>
         </div>
       </div>

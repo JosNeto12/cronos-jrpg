@@ -2,6 +2,8 @@ export type Element = "none" | "fire" | "ice" | "thunder" | "earth";
 
 export type MoveType = "physical" | "magical" | "support" | "debuff";
 
+export type SkillBranch = "vitalidad" | "fuerza" | "sabiduria" | "tecnica";
+
 export type StatBlock = {
   hp: number;
   pcr: number;
@@ -12,6 +14,20 @@ export type StatBlock = {
   res: number;
   spd: number;
   sab: number;
+};
+
+export type SkillEffect =
+  | { type: "stat"; stat: keyof StatBlock | "tp"; value: number }
+  | { type: "learn_move"; moveId: string };
+
+export type SkillNode = {
+  id: string;
+  name: string;
+  description: string;
+  branch: SkillBranch;
+  cost: number;
+  requires: string[];
+  effects: SkillEffect[];
 };
 
 export type Combatant = {
@@ -52,4 +68,13 @@ export type Action = {
   targetId?: string;
   skillPower?: number;
   tpCost?: number;
+};
+
+export type PlayerProgress = {
+  vivencias: number;
+  seedsAvailable: number;
+  winsAtCurrentAge: number;
+  age: number;
+  unlockedNodes: string[];
+  knownMoves: string[];
 };

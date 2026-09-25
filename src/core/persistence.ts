@@ -1,4 +1,7 @@
+import type { PlayerProgress } from "./types/schemas";
+
 const MOVE_ORDER_KEY = "cronos.moveOrder";
+const PROGRESS_KEY = "cronos.progress";
 
 export function loadMoveOrder(): string[] | null {
   try {
@@ -18,7 +21,7 @@ export function saveMoveOrder(order: string[]): void {
   try {
     localStorage.setItem(MOVE_ORDER_KEY, JSON.stringify(order));
   } catch {
-    // localStorage podría no estar disponible (modo incógnito estricto)
+    // ignorar
   }
 }
 
@@ -30,11 +33,6 @@ export function clearMoveOrder(): void {
   }
 }
 
-/**
- * Reconcilia el orden guardado con la lista actual de movimientos conocidos.
- * - Los movimientos que ya no existen en `known` se eliminan del orden.
- * - Los movimientos nuevos que no están en el orden guardado se añaden al final.
- */
 export function reconcileOrder(
   known: string[],
   saved: string[] | null
@@ -45,4 +43,40 @@ export function reconcileOrder(
     if (!filtered.includes(id)) filtered.push(id);
   }
   return filtered;
+}
+
+export function loadProgress(): PlayerProgress | null {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      Array.isArray(parsed.unlockedNodes) &&
+      Array.isArray(parsed.knownMoves) &&
+      typeof parsed.age === "number"
+    ) {
+      return parsed as PlayerProgress;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveProgress(progress: PlayerProgress): void {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  } catch {
+    // ignorar
+  }
+}
+
+export function clearProgress(): void {
+  try {
+    localStorage.removeItem(PROGRESS_KEY);
+  } catch {
+    // ignorar
+  }
 }

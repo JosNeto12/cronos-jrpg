@@ -1,0 +1,193 @@
+{
+  "vitalidad_1": {
+    "id": "vitalidad_1",
+    "name": "Vitalidad I",
+    "description": "+15 HP máximo",
+    "branch": "vitalidad",
+    "cost": 1,
+    "requires": [],
+    "effects": [{ "type": "stat", "stat": "hp", "value": 15 }]
+  },
+  "vitalidad_2": {
+    "id": "vitalidad_2",
+    "name": "Vitalidad II",
+    "description": "+25 HP máximo",
+    "branch": "vitalidad",
+    "cost": 1,
+    "requires": ["vitalidad_1"],
+    "effects": [{ "type": "stat", "stat": "hp", "value": 25 }]
+  },
+  "vitalidad_3": {
+    "id": "vitalidad_3",
+    "name": "Piel Firme",
+    "description": "+4 DEF",
+    "branch": "vitalidad",
+    "cost": 1,
+    "requires": ["vitalidad_1"],
+    "effects": [{ "type": "stat", "stat": "def", "value": 4 }]
+  },
+  "vitalidad_4": {
+    "id": "vitalidad_4",
+    "name": "Mente Clara",
+    "description": "+4 RES",
+    "branch": "vitalidad",
+    "cost": 1,
+    "requires": ["vitalidad_1"],
+    "effects": [{ "type": "stat", "stat": "res", "value": 4 }]
+  },
+  "vitalidad_5": {
+    "id": "vitalidad_5",
+    "name": "Roble Centenario",
+    "description": "+40 HP, +5 DEF, +5 RES",
+    "branch": "vitalidad",
+    "cost": 2,
+    "requires": ["vitalidad_2", "vitalidad_3", "vitalidad_4"],
+    "effects": [
+      { "type": "stat", "stat": "hp", "value": 40 },
+      { "type": "stat", "stat": "def", "value": 5 },
+      { "type": "stat", "stat": "res", "value": 5 }
+    ]
+  },
+
+  "fuerza_1": {
+    "id": "fuerza_1",
+    "name": "Fuerza I",
+    "description": "+3 ATK",
+    "branch": "fuerza",
+    "cost": 1,
+    "requires": [],
+    "effects": [{ "type": "stat", "stat": "atk", "value": 3 }]
+  },
+  "fuerza_2": {
+    "id": "fuerza_2",
+    "name": "Pulmones Fuertes",
+    "description": "+6 PCr máximo",
+    "branch": "fuerza",
+    "cost": 1,
+    "requires": ["fuerza_1"],
+    "effects": [{ "type": "stat", "stat": "pcr", "value": 6 }]
+  },
+  "fuerza_3": {
+    "id": "fuerza_3",
+    "name": "Fuerza II",
+    "description": "+5 ATK",
+    "branch": "fuerza",
+    "cost": 1,
+    "requires": ["fuerza_1"],
+    "effects": [{ "type": "stat", "stat": "atk", "value": 5 }]
+  },
+  "fuerza_4": {
+    "id": "fuerza_4",
+    "name": "Salto Patada",
+    "description": "Aprende Salto Patada",
+    "branch": "fuerza",
+    "cost": 2,
+    "requires": ["fuerza_2"],
+    "effects": [{ "type": "learn_move", "moveId": "jump_kick" }]
+  },
+  "fuerza_5": {
+    "id": "fuerza_5",
+    "name": "Puñetazo Certero",
+    "description": "Aprende Puñetazo Certero",
+    "branch": "fuerza",
+    "cost": 2,
+    "requires": ["fuerza_3"],
+    "effects": [{ "type": "learn_move", "moveId": "focus_punch" }]
+  },
+
+  "sabiduria_1": {
+    "id": "sabiduria_1",
+    "name": "Sabiduría I",
+    "description": "+3 MAG",
+    "branch": "sabiduria",
+    "cost": 1,
+    "requires": [],
+    "effects": [{ "type": "stat", "stat": "mag", "value": 3 }]
+  },
+  "sabiduria_2": {
+    "id": "sabiduria_2",
+    "name": "Reserva Mental",
+    "description": "+6 ATP máximo",
+    "branch": "sabiduria",
+    "cost": 1,
+    "requires": ["sabiduria_1"],
+    "effects": [{ "type": "stat", "stat": "atp", "value": 6 }]
+  },
+  "sabiduria_3": {
+    "id": "sabiduria_3",
+    "name": "Sabiduría II",
+    "description": "+5 MAG",
+    "branch": "sabiduria",
+    "cost": 1,
+    "requires": ["sabiduria_1"],
+    "effects": [{ "type": "stat", "stat": "mag", "value": 5 }]
+  },
+  "sabiduria_4": {
+    "id": "sabiduria_4",
+    "name": "Llamarada",
+    "description": "Aprende Llamarada (fuego)",
+    "branch": "sabiduria",
+    "cost": 2,
+    "requires": ["sabiduria_2"],
+    "effects": [{ "type": "learn_move", "moveId": "flame" }]
+  },
+  "sabiduria_5": {
+    "id": "sabiduria_5",
+    "name": "Ventisca",
+    "description": "Aprende Ventisca (hielo)",
+    "branch": "sabiduria",
+    "cost": 2,
+    "requires": ["sabiduria_3"],
+    "effects": [{ "type": "learn_move", "moveId": "blizzard" }]
+  },
+
+  "tecnica_1": {
+    "id": "tecnica_1",
+    "name": "Guijarro",
+    "description": "Aprende Guijarro (tierra)",
+    "branch": "tecnica",
+    "cost": 1,
+    "requires": [],
+    "effects": [{ "type": "learn_move", "moveId": "boulder" }]
+  },
+  "tecnica_2": {
+    "id": "tecnica_2",
+    "name": "Concentración",
+    "description": "Aprende Concentración (genera TP sin atacar)",
+    "branch": "tecnica",
+    "cost": 1,
+    "requires": ["tecnica_1"],
+    "effects": [{ "type": "learn_move", "moveId": "focus" }]
+  },
+  "tecnica_3": {
+    "id": "tecnica_3",
+    "name": "Templanza",
+    "description": "+3 TP máximo",
+    "branch": "tecnica",
+    "cost": 1,
+    "requires": ["tecnica_1"],
+    "effects": [{ "type": "stat", "stat": "tp", "value": 3 }]
+  },
+  "tecnica_4": {
+    "id": "tecnica_4",
+    "name": "Reflejos",
+    "description": "+3 SPD",
+    "branch": "tecnica",
+    "cost": 1,
+    "requires": ["tecnica_1"],
+    "effects": [{ "type": "stat", "stat": "spd", "value": 3 }]
+  },
+  "tecnica_5": {
+    "id": "tecnica_5",
+    "name": "Mente y Cuerpo",
+    "description": "+3 SAB, +3 ATK, +3 MAG",
+    "branch": "tecnica",
+    "cost": 2,
+    "requires": ["tecnica_2", "tecnica_3"],
+    "effects": [
+      { "type": "stat", "stat": "sab", "value": 3 },
+      { "type": "stat", "stat": "atk", "value": 3 },
+      { "type": "stat", "stat": "mag", "value": 3 }
+    ]
+  }
+}
