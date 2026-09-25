@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useBattleStore } from "../../store/battleStore";
 import { EntityCard } from "./EntityCard";
 import { ActionMenu } from "./ActionMenu";
+import { MoveManager } from "./MoveManager";
 
 export function BattleScreen() {
   const { hero, enemy, phase, log, init } = useBattleStore();
@@ -44,6 +45,8 @@ export function BattleScreen() {
           </button>
         </div>
       )}
+
+      <MoveManager />
     </div>
   );
 }

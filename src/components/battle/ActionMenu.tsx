@@ -31,18 +31,19 @@ export function ActionMenu() {
   const {
     phase,
     hero,
-    knownMoves,
+    moveOrder,
     executeMove,
     heroMitigate,
     skipMitigation,
     ageUp,
+    toggleMoveManager,
   } = useBattleStore();
 
   if (phase === "hero_turn") {
     return (
       <div className="space-y-3">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {knownMoves.map((id) => {
+          {moveOrder.map((id) => {
             const move = MOVES[id];
             if (!move) return null;
             const enabled = canUseMove(move, hero);
@@ -67,13 +68,19 @@ export function ActionMenu() {
           })}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={ageUp}
             disabled={hero.age >= 90}
             className="px-5 py-3 bg-panel border border-accent text-accent font-bold rounded-lg disabled:opacity-40"
           >
             Cumplir 1 Año ({hero.age} → {hero.age + 1})
+          </button>
+          <button
+            onClick={toggleMoveManager}
+            className="px-5 py-3 bg-panel border border-slate-600 text-slate-200 font-bold rounded-lg"
+          >
+            Ordenar Movimientos
           </button>
         </div>
       </div>

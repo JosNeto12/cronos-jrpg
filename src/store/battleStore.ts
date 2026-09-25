@@ -12,11 +12,18 @@ import {
   atpRegen,
   collapseDamage,
 } from "../core/engine/lifeCurve";
+import {
+  loadMoveOrder,
+  saveMoveOrder,
+  clearMoveOrder,
+  reconcileOrder,
+} from "../core/persistence";
 import heroData from "../data/heroes.json";
 import enemyData from "../data/enemies.json";
 import movesData from "../data/moves.json";
 
 const MOVES: Record<string, Move> = movesData as Record<string, Move>;
+const INITIAL_KNOWN: string[] = (heroData as any).knownMoves ?? [];
 
 function makeCombatant(data: any): Combatant {
   const baseStats = { ...data.stats };
@@ -73,6 +80,8 @@ type BattleState = {
   hero: Combatant;
   enemy: Combatant;
   knownMoves: string[];
+  moveOrder: string[];
+  showMoveManager: boolean;
   phase: Phase;
   log: string[];
   turnManager: TurnManager;
@@ -84,12 +93,19 @@ type BattleState = {
   skipMitigation: () => void;
   enemyTurn: () => void;
   ageUp: () => void;
+  reorderMove: (moveId: string, direction: "up" | "down") => void;
+  resetMoveOrder: () => void;
+  toggleMoveManager: () => void;
 };
+
+const initialOrder = reconcileOrder(INITIAL_KNOWN, loadMoveOrder());
 
 export const useBattleStore = create<BattleState>((set, get) => ({
   hero: makeCombatant(heroData),
   enemy: makeCombatant(enemyData),
-  knownMoves: (heroData as any).knownMoves ?? [],
+  knownMoves: INITIAL_KNOWN,
+  moveOrder: initialOrder,
+  showMoveManager: false,
   phase: "hero_turn",
   log: [],
   turnManager: new TurnManager([
@@ -101,10 +117,13 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   init: () => {
     const hero = makeCombatant(heroData);
     const enemy = makeCombatant(enemyData);
+    const order = reconcileOrder(INITIAL_KNOWN, loadMoveOrder());
     set({
       hero,
       enemy,
-      knownMoves: (heroData as any).knownMoves ?? [],
+      knownMoves: INITIAL_KNOWN,
+      moveOrder: order,
+      showMoveManager: false,
       phase: "hero_turn",
       log: ["¡Comienza el combate!"],
       turnManager: new TurnManager([hero, enemy]),
@@ -134,6 +153,36 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     });
   },
 
+  reorderMove: (moveId: string, direction: "up" | "down") => {
+    const { moveOrder } = get();
+    const idx = moveOrder.indexOf(moveId);
+    if (idx < 0) return;
+
+    const target = direction === "up" ? idx - 1 : idx + 1;
+    if (target < 0 || target >= moveOrder.length) return;
+
+    const newOrder = [...moveOrder];
+    [newOrder[idx], newOrder[target]] = [newOrder[target], newOrder[idx]];
+
+    saveMoveOrder(newOrder);
+    set({ moveOrder: newOrder });
+  },
+
+  resetMoveOrder: () => {
+    clearMoveOrder();
+    const { knownMoves, log } = get();
+    const order = [...knownMoves];
+    saveMoveOrder(order);
+    set({
+      moveOrder: order,
+      log: [...log, "Orden de movimientos restablecido."],
+    });
+  },
+
+  toggleMoveManager: () => {
+    set({ showMoveManager: !get().showMoveManager });
+  },
+
   executeMove: (moveId: string) => {
     const move = MOVES[moveId];
     if (!move) {
@@ -144,7 +193,6 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
     const { hero, enemy, log } = get();
 
-    // Validar costes
     if (move.pcrCost > hero.currentPcr) {
       set({ log: [...log, `PCr insuficiente para ${move.name}.`] });
       return;
@@ -158,7 +206,6 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // Gastar recursos y ganar TP
     let updatedHero: Combatant = {
       ...hero,
       currentPcr: hero.currentPcr - move.pcrCost,
@@ -169,7 +216,6 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     let updatedEnemy: Combatant = { ...enemy };
     const newLog: string[] = [];
 
-    // Aplicar efecto según tipo
     if (move.type === "physical") {
       const dmg = physicalDamage(hero, enemy, move.element, move.power);
       updatedEnemy.currentHp = Math.max(0, enemy.currentHp - dmg);
@@ -204,7 +250,6 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
     }
 
-    // Clamp TP entre 0 y maxTp
     updatedHero.currentTp = Math.max(
       0,
       Math.min(updatedHero.maxTp, updatedHero.currentTp)
