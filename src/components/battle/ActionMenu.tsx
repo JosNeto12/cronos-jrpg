@@ -1,5 +1,9 @@
 import { useBattleStore } from "../../store/battleStore";
 
+const ATTACK_PCR_COST = 2;
+const SKILL_PCR_COST = 4;
+const SKILL_TP_COST = 3;
+
 export function ActionMenu() {
   const {
     phase,
@@ -12,20 +16,25 @@ export function ActionMenu() {
   } = useBattleStore();
 
   if (phase === "hero_turn") {
+    const canAttack = hero.currentPcr >= ATTACK_PCR_COST;
+    const canSkill =
+      hero.currentPcr >= SKILL_PCR_COST && hero.currentTp >= SKILL_TP_COST;
+
     return (
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={heroAttack}
-          className="px-5 py-3 bg-accent text-bg font-bold rounded-lg"
+          disabled={!canAttack}
+          className="px-5 py-3 bg-accent text-bg font-bold rounded-lg disabled:opacity-40"
         >
-          Atacar (+2 TP)
+          Atacar ({ATTACK_PCR_COST} PCr)
         </button>
         <button
           onClick={heroSkill}
-          disabled={hero.currentTp < 3}
+          disabled={!canSkill}
           className="px-5 py-3 bg-tension text-bg font-bold rounded-lg disabled:opacity-40"
         >
-          Corte Táctico (-3 TP)
+          Corte Táctico ({SKILL_PCR_COST} PCr + {SKILL_TP_COST} TP)
         </button>
         <button
           onClick={ageUp}

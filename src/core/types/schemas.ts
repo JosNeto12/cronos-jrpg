@@ -2,13 +2,14 @@ export type Element = "none" | "fire" | "ice" | "thunder" | "earth";
 
 export type StatBlock = {
   hp: number;
-  tp: number;
+  pcr: number; // Fosfocreatina máxima
+  atp: number; // Adenosín Trifosfato máximo
   atk: number;
   def: number;
   mag: number;
   res: number;
   spd: number;
-  sab: number; // Sabiduría
+  sab: number;
 };
 
 export type Combatant = {
@@ -16,9 +17,11 @@ export type Combatant = {
   name: string;
   side: "hero" | "enemy";
   stats: StatBlock;
-  baseStats: StatBlock; // stats "a los 30", sin modificar por edad
+  baseStats: StatBlock;
   age: number;
   currentHp: number;
+  currentPcr: number;
+  currentAtp: number;
   currentTp: number;
   maxTp: number;
   element: Element;

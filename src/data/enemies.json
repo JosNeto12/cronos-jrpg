@@ -6,7 +6,8 @@
   "maxTp": 0,
   "stats": {
     "hp": 150,
-    "tp": 0,
+    "pcr": 15,
+    "atp": 10,
     "atk": 14,
     "def": 8,
     "mag": 0,

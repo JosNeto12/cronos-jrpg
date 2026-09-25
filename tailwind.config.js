@@ -9,6 +9,8 @@ export default {
         accent: "#5eead4",
         danger: "#f87171",
         tension: "#fbbf24",
+        pcr: "#f97316",
+        atp: "#60a5fa",
       },
     },
   },

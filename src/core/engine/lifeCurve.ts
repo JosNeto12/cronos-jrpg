@@ -1,7 +1,5 @@
 import type { StatBlock } from "../types/schemas";
 
-// Puntos de control: multiplicadores por stat según edad.
-// El valor en age=30 es 1.0 (base del JSON).
 type CurvePoint = { age: number; mult: number };
 
 const CURVES: Record<keyof StatBlock, CurvePoint[]> = {
@@ -16,11 +14,27 @@ const CURVES: Record<keyof StatBlock, CurvePoint[]> = {
     { age: 80, mult: 0.60 },
     { age: 90, mult: 0.50 },
   ],
-  tp: [
-    { age: 10, mult: 1.00 },
-    { age: 30, mult: 1.00 },
-    { age: 60, mult: 1.00 },
-    { age: 90, mult: 1.00 },
+  pcr: [
+    { age: 10, mult: 0.80 },
+    { age: 20, mult: 1.00 },
+    { age: 30, mult: 0.95 },
+    { age: 40, mult: 0.80 },
+    { age: 50, mult: 0.65 },
+    { age: 60, mult: 0.50 },
+    { age: 70, mult: 0.35 },
+    { age: 80, mult: 0.25 },
+    { age: 90, mult: 0.15 },
+  ],
+  atp: [
+    { age: 10, mult: 0.30 },
+    { age: 20, mult: 0.40 },
+    { age: 30, mult: 0.55 },
+    { age: 40, mult: 0.75 },
+    { age: 50, mult: 0.95 },
+    { age: 60, mult: 1.15 },
+    { age: 70, mult: 1.35 },
+    { age: 80, mult: 1.50 },
+    { age: 90, mult: 1.60 },
   ],
   atk: [
     { age: 10, mult: 0.50 },
@@ -89,7 +103,6 @@ const CURVES: Record<keyof StatBlock, CurvePoint[]> = {
   ],
 };
 
-/** Interpola linealmente el multiplicador para una edad dada. */
 function interpolate(points: CurvePoint[], age: number): number {
   if (age <= points[0].age) return points[0].mult;
   if (age >= points[points.length - 1].age)
@@ -106,7 +119,6 @@ function interpolate(points: CurvePoint[], age: number): number {
   return 1;
 }
 
-/** Devuelve los stats de un combatant según su edad, redondeados. */
 export function getStatsForAge(base: StatBlock, age: number): StatBlock {
   const result = {} as StatBlock;
   (Object.keys(CURVES) as (keyof StatBlock)[]).forEach((key) => {
@@ -116,13 +128,23 @@ export function getStatsForAge(base: StatBlock, age: number): StatBlock {
   return result;
 }
 
-/**
- * Influencia de la Sabiduría en el daño físico.
- * A mayor edad, más parte del ATK se sustituye por SAB.
- */
 export function wisdomInfluence(age: number): number {
   if (age <= 40) return 0;
   if (age >= 90) return 0.75;
-  // Interpolación lineal de 40 → 0.0 a 90 → 0.75
   return ((age - 40) / 50) * 0.75;
+}
+
+/** Regeneración de PCr por turno (15% del máximo, mínimo 1). */
+export function pcrRegen(maxPcr: number): number {
+  return Math.max(1, Math.floor(maxPcr * 0.15));
+}
+
+/** Regeneración de ATP por turno (10% del máximo, mínimo 1). */
+export function atpRegen(maxAtp: number): number {
+  return Math.max(1, Math.floor(maxAtp * 0.10));
+}
+
+/** Daño por Colapso: 5% del HP máximo, mínimo 1. */
+export function collapseDamage(maxHp: number): number {
+  return Math.max(1, Math.floor(maxHp * 0.05));
 }
