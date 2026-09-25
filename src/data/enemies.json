@@ -1,0 +1,18 @@
+{
+  "id": "enemy_1",
+  "name": "Golem de Prueba",
+  "side": "enemy",
+  "maxTp": 0,
+  "stats": {
+    "hp": 150,
+    "tp": 0,
+    "atk": 14,
+    "def": 8,
+    "mag": 0,
+    "res": 6,
+    "spd": 10
+  },
+  "element": "earth",
+  "weaknesses": ["ice"],
+  "resistances": ["thunder"]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "hero_1",
+  "name": "Cronos",
+  "side": "hero",
+  "maxTp": 10,
+  "stats": {
+    "hp": 120,
+    "tp": 0,
+    "atk": 18,
+    "def": 10,
+    "mag": 8,
+    "res": 8,
+    "spd": 15
+  },
+  "element": "none",
+  "weaknesses": [],
+  "resistances": []
+}
