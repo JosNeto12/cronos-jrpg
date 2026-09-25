@@ -10,6 +10,7 @@ export function ActionMenu() {
     hero,
     heroAttack,
     heroSkill,
+    heroRest,
     heroMitigate,
     skipMitigation,
     ageUp,
@@ -26,6 +27,7 @@ export function ActionMenu() {
           onClick={heroAttack}
           disabled={!canAttack}
           className="px-5 py-3 bg-accent text-bg font-bold rounded-lg disabled:opacity-40"
+          title={!canAttack ? "PCr insuficiente" : ""}
         >
           Atacar ({ATTACK_PCR_COST} PCr)
         </button>
@@ -33,8 +35,16 @@ export function ActionMenu() {
           onClick={heroSkill}
           disabled={!canSkill}
           className="px-5 py-3 bg-tension text-bg font-bold rounded-lg disabled:opacity-40"
+          title={!canSkill ? "PCr o TP insuficientes" : ""}
         >
           Corte Táctico ({SKILL_PCR_COST} PCr + {SKILL_TP_COST} TP)
+        </button>
+        <button
+          onClick={heroRest}
+          className="px-5 py-3 bg-slate-600 text-white font-bold rounded-lg"
+          title="Recupera PCr y ATP, pero pierdes 1 TP"
+        >
+          Tomar Aliento
         </button>
         <button
           onClick={ageUp}

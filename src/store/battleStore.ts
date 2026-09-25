@@ -14,6 +14,7 @@ import enemyData from "../data/enemies.json";
 const ATTACK_PCR_COST = 2;
 const SKILL_PCR_COST = 4;
 const SKILL_TP_COST = 3;
+const REST_TP_COST = 1;
 
 function makeCombatant(data: any): Combatant {
   const baseStats = { ...data.stats };
@@ -37,14 +38,9 @@ function makeCombatant(data: any): Combatant {
   };
 }
 
-/**
- * Aplica regen + chequeo de Colapso al inicio del turno del actor.
- * Se ejecuta ANTES de la regen para que el Colapso se note si el ATP llega a 0.
- */
 function startTurn(c: Combatant, log: string[]): Combatant {
   let actor = c;
 
-  // Colapso: si el ATP es 0 al empezar el turno
   if (actor.currentAtp === 0) {
     const dmg = collapseDamage(actor.stats.hp);
     actor = { ...actor, currentHp: Math.max(0, actor.currentHp - dmg) };
@@ -53,7 +49,6 @@ function startTurn(c: Combatant, log: string[]): Combatant {
     );
   }
 
-  // Regen de recursos
   const pr = pcrRegen(actor.stats.pcr);
   const ar = atpRegen(actor.stats.atp);
   actor = {
@@ -83,6 +78,7 @@ type BattleState = {
   init: () => void;
   heroAttack: () => void;
   heroSkill: () => void;
+  heroRest: () => void;
   heroMitigate: (tp: number) => void;
   skipMitigation: () => void;
   enemyTurn: () => void;
@@ -206,6 +202,33 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     get().enemyTurn();
   },
 
+  heroRest: () => {
+    const { hero, log } = get();
+
+    const pr = pcrRegen(hero.stats.pcr);
+    const ar = atpRegen(hero.stats.atp);
+    const newPcr = Math.min(hero.stats.pcr, hero.currentPcr + pr);
+    const newAtp = Math.min(hero.stats.atp, hero.currentAtp + ar);
+    const newTp = Math.max(0, hero.currentTp - REST_TP_COST);
+
+    const updatedHero: Combatant = {
+      ...hero,
+      currentPcr: newPcr,
+      currentAtp: newAtp,
+      currentTp: newTp,
+    };
+
+    set({
+      hero: updatedHero,
+      log: [
+        ...log,
+        `${hero.name} toma aliento: +${pr} PCr, +${ar} ATP, -${REST_TP_COST} TP.`,
+      ],
+    });
+
+    get().enemyTurn();
+  },
+
   enemyTurn: () => {
     const { hero, enemy } = get();
     const log = [...get().log];
@@ -241,7 +264,6 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // Inicio del turno del héroe: Colapso + regen
     updatedHero = startTurn(updatedHero, log);
     if (updatedHero.currentHp <= 0) {
       set({ hero: updatedHero, phase: "defeat", pendingEnemyDamage: 0, log });
