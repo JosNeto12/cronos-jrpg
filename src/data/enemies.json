@@ -4,6 +4,7 @@
   "side": "enemy",
   "age": 30,
   "maxTp": 0,
+  "vivencias": 50,
   "stats": {
     "hp": 150,
     "pcr": 15,

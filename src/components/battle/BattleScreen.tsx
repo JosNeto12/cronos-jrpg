@@ -6,11 +6,30 @@ import { MoveManager } from "./MoveManager";
 import { SkillTree } from "./SkillTree";
 
 export function BattleScreen() {
-  const { hero, enemy, phase, log, init, progress } = useBattleStore();
+  const { hero, enemy, phase, log, init, progress, resetProgress } =
+    useBattleStore();
 
   useEffect(() => {
     init();
   }, []);
+
+  const handleHardReset = () => {
+    if (
+      !confirm(
+        "¿Borrar TODO el progreso? Se perderán Vivencias, Semillas, nodos y movimientos."
+      )
+    ) {
+      return;
+    }
+    try {
+      localStorage.removeItem("cronos.progress");
+      localStorage.removeItem("cronos.moveOrder");
+    } catch {
+      // ignorar
+    }
+    resetProgress();
+    setTimeout(() => window.location.reload(), 100);
+  };
 
   return (
     <div className="min-h-screen p-4 max-w-4xl mx-auto">
@@ -18,7 +37,7 @@ export function BattleScreen() {
         <h1 className="text-2xl font-bold text-accent">
           Proyecto Cronos — Combate
         </h1>
-        <div className="flex gap-4 text-xs flex-wrap">
+        <div className="flex gap-4 text-xs flex-wrap items-center">
           <span className="text-slate-400">
             Vivencias:{" "}
             <span className="text-white">{progress.vivencias}/100</span>
@@ -36,6 +55,13 @@ export function BattleScreen() {
             Victorias:{" "}
             <span className="text-white">{progress.winsAtCurrentAge}/3</span>
           </span>
+          <button
+            onClick={handleHardReset}
+            className="px-3 py-1 bg-panel border border-red-700 text-red-400 rounded text-[11px] hover:bg-red-950"
+            title="Borra todo el progreso guardado"
+          >
+            Reiniciar Todo
+          </button>
         </div>
       </div>
 
