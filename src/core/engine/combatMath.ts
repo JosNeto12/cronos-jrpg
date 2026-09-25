@@ -1,4 +1,5 @@
 import type { Combatant, Element } from "../types/schemas";
+import { wisdomInfluence } from "./lifeCurve";
 
 const round = (n: number) => Math.floor(n);
 
@@ -11,12 +12,21 @@ export function elementMultiplier(
   return 1;
 }
 
+/**
+ * Devuelve el "poder ofensivo" del atacante.
+ * Jóvenes: ATK puro. Ancianos: mezcla de ATK y SAB.
+ */
+export function effectiveAttack(attacker: Combatant): number {
+  const w = wisdomInfluence(attacker.age);
+  return attacker.stats.atk * (1 - w) + attacker.stats.sab * w;
+}
+
 export function physicalDamage(
   attacker: Combatant,
   defender: Combatant,
   power = 1
 ): number {
-  const base = attacker.stats.atk * power;
+  const base = effectiveAttack(attacker) * power;
   const mitigation = 100 / (100 + defender.stats.def);
   const elem = elementMultiplier(attacker.element, defender);
   return Math.max(1, round(base * mitigation * elem));

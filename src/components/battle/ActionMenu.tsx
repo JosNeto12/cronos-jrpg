@@ -1,8 +1,15 @@
 import { useBattleStore } from "../../store/battleStore";
 
 export function ActionMenu() {
-  const { phase, hero, heroAttack, heroSkill, heroMitigate, skipMitigation } =
-    useBattleStore();
+  const {
+    phase,
+    hero,
+    heroAttack,
+    heroSkill,
+    heroMitigate,
+    skipMitigation,
+    ageUp,
+  } = useBattleStore();
 
   if (phase === "hero_turn") {
     return (
@@ -19,6 +26,13 @@ export function ActionMenu() {
           className="px-5 py-3 bg-tension text-bg font-bold rounded-lg disabled:opacity-40"
         >
           Corte Táctico (-3 TP)
+        </button>
+        <button
+          onClick={ageUp}
+          disabled={hero.age >= 90}
+          className="px-5 py-3 bg-panel border border-accent text-accent font-bold rounded-lg disabled:opacity-40"
+        >
+          Cumplir 1 Año ({hero.age} → {hero.age + 1})
         </button>
       </div>
     );

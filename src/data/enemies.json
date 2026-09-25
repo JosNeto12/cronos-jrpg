@@ -2,6 +2,7 @@
   "id": "enemy_1",
   "name": "Golem de Prueba",
   "side": "enemy",
+  "age": 30,
   "maxTp": 0,
   "stats": {
     "hp": 150,
@@ -10,7 +11,8 @@
     "def": 8,
     "mag": 0,
     "res": 6,
-    "spd": 10
+    "spd": 10,
+    "sab": 0
   },
   "element": "earth",
   "weaknesses": ["ice"],

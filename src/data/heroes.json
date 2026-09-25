@@ -2,6 +2,7 @@
   "id": "hero_1",
   "name": "Cronos",
   "side": "hero",
+  "age": 20,
   "maxTp": 10,
   "stats": {
     "hp": 120,
@@ -10,7 +11,8 @@
     "def": 10,
     "mag": 8,
     "res": 8,
-    "spd": 15
+    "spd": 15,
+    "sab": 10
   },
   "element": "none",
   "weaknesses": [],

@@ -2,10 +2,14 @@ import { create } from "zustand";
 import type { Combatant } from "../core/types/schemas";
 import { physicalDamage, applyMitigation } from "../core/engine/combatMath";
 import { TurnManager } from "../core/engine/turnManager";
+import { getStatsForAge } from "../core/engine/lifeCurve";
 import heroData from "../data/heroes.json";
 import enemyData from "../data/enemies.json";
 
 function makeCombatant(data: any): Combatant {
+  const baseStats = { ...data.stats };
+  const age = data.age ?? 30;
+  const stats = getStatsForAge(baseStats, age);
   return {
     id: data.id,
     name: data.name,
@@ -13,8 +17,10 @@ function makeCombatant(data: any): Combatant {
     element: data.element,
     weaknesses: data.weaknesses,
     resistances: data.resistances,
-    stats: { ...data.stats },
-    currentHp: data.stats.hp,
+    baseStats,
+    stats,
+    age,
+    currentHp: stats.hp,
     currentTp: 0,
     maxTp: data.maxTp,
   };
@@ -41,6 +47,7 @@ type BattleState = {
   heroMitigate: (tp: number) => void;
   skipMitigation: () => void;
   enemyTurn: () => void;
+  ageUp: () => void;
 };
 
 export const useBattleStore = create<BattleState>((set, get) => ({
@@ -64,6 +71,25 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       log: ["¡Comienza el combate!"],
       turnManager: new TurnManager([hero, enemy]),
       pendingEnemyDamage: 0,
+    });
+  },
+
+  ageUp: () => {
+    const { hero, log } = get();
+    const newAge = Math.min(hero.age + 1, 90);
+    const newStats = getStatsForAge(hero.baseStats, newAge);
+    // Preserva el % de HP y TP actuales para que no sea injusto
+    const hpRatio = hero.currentHp / hero.stats.hp;
+    const tpRatio = hero.currentTp / hero.maxTp;
+    set({
+      hero: {
+        ...hero,
+        age: newAge,
+        stats: newStats,
+        currentHp: Math.max(1, Math.round(newStats.hp * hpRatio)),
+        currentTp: Math.round(hero.maxTp * tpRatio),
+      },
+      log: [...log, `Cronos cumple ${newAge} años. Sus stats cambian.`],
     });
   },
 

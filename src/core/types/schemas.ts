@@ -8,6 +8,7 @@ export type StatBlock = {
   mag: number;
   res: number;
   spd: number;
+  sab: number; // Sabiduría
 };
 
 export type Combatant = {
@@ -15,6 +16,8 @@ export type Combatant = {
   name: string;
   side: "hero" | "enemy";
   stats: StatBlock;
+  baseStats: StatBlock; // stats "a los 30", sin modificar por edad
+  age: number;
   currentHp: number;
   currentTp: number;
   maxTp: number;
