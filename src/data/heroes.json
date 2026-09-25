@@ -4,6 +4,7 @@
   "side": "hero",
   "age": 20,
   "maxTp": 10,
+  "knownMoves": ["punch", "kick", "spark", "breath"],
   "stats": {
     "hp": 120,
     "pcr": 20,

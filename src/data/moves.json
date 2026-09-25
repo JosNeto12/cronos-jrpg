@@ -1,0 +1,122 @@
+{
+  "punch": {
+    "id": "punch",
+    "name": "Puñetazo",
+    "type": "physical",
+    "element": "none",
+    "pcrCost": 2,
+    "atpCost": 0,
+    "tpCost": 0,
+    "tpGain": 2,
+    "power": 1.0,
+    "description": "Golpe directo y rápido."
+  },
+  "kick": {
+    "id": "kick",
+    "name": "Patada",
+    "type": "physical",
+    "element": "none",
+    "pcrCost": 4,
+    "atpCost": 0,
+    "tpCost": 0,
+    "tpGain": 2,
+    "power": 1.7,
+    "description": "Patada con más peso que un puñetazo."
+  },
+  "jump_kick": {
+    "id": "jump_kick",
+    "name": "Salto Patada",
+    "type": "physical",
+    "element": "none",
+    "pcrCost": 7,
+    "atpCost": 0,
+    "tpCost": 0,
+    "tpGain": 3,
+    "power": 2.8,
+    "description": "Salto devastador. Cuesta mucho PCr."
+  },
+  "focus_punch": {
+    "id": "focus_punch",
+    "name": "Puñetazo Certero",
+    "type": "physical",
+    "element": "none",
+    "pcrCost": 3,
+    "atpCost": 0,
+    "tpCost": 0,
+    "tpGain": 4,
+    "power": 1.2,
+    "description": "Golpe controlado que genera más Tensión."
+  },
+  "spark": {
+    "id": "spark",
+    "name": "Chispa",
+    "type": "magical",
+    "element": "thunder",
+    "pcrCost": 0,
+    "atpCost": 3,
+    "tpCost": 0,
+    "tpGain": 1,
+    "power": 1.0,
+    "description": "Descarga eléctrica básica."
+  },
+  "flame": {
+    "id": "flame",
+    "name": "Llamarada",
+    "type": "magical",
+    "element": "fire",
+    "pcrCost": 0,
+    "atpCost": 6,
+    "tpCost": 0,
+    "tpGain": 1,
+    "power": 1.8,
+    "description": "Columna de fuego concentrado."
+  },
+  "blizzard": {
+    "id": "blizzard",
+    "name": "Ventisca",
+    "type": "magical",
+    "element": "ice",
+    "pcrCost": 0,
+    "atpCost": 9,
+    "tpCost": 0,
+    "tpGain": 1,
+    "power": 2.8,
+    "description": "Tormenta de hielo devastadora."
+  },
+  "boulder": {
+    "id": "boulder",
+    "name": "Guijarro",
+    "type": "magical",
+    "element": "earth",
+    "pcrCost": 0,
+    "atpCost": 4,
+    "tpCost": 0,
+    "tpGain": 1,
+    "power": 1.4,
+    "description": "Proyectil de piedra."
+  },
+  "breath": {
+    "id": "breath",
+    "name": "Tomar Aliento",
+    "type": "support",
+    "element": "none",
+    "pcrCost": 0,
+    "atpCost": 0,
+    "tpCost": 1,
+    "tpGain": 0,
+    "power": 0,
+    "description": "Recupera PCr y ATP, cuesta 1 TP."
+  },
+  "focus": {
+    "id": "focus",
+    "name": "Concentración",
+    "type": "support",
+    "element": "none",
+    "pcrCost": 0,
+    "atpCost": 0,
+    "tpCost": 0,
+    "tpGain": 3,
+    "power": 0,
+    "description": "Genera Tensión sin atacar."
+  }
+}

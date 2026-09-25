@@ -1,9 +1,11 @@
 export type Element = "none" | "fire" | "ice" | "thunder" | "earth";
 
+export type MoveType = "physical" | "magical" | "support" | "debuff";
+
 export type StatBlock = {
   hp: number;
-  pcr: number; // Fosfocreatina máxima
-  atp: number; // Adenosín Trifosfato máximo
+  pcr: number;
+  atp: number;
   atk: number;
   def: number;
   mag: number;
@@ -27,6 +29,19 @@ export type Combatant = {
   element: Element;
   weaknesses: Element[];
   resistances: Element[];
+};
+
+export type Move = {
+  id: string;
+  name: string;
+  type: MoveType;
+  element: Element;
+  pcrCost: number;
+  atpCost: number;
+  tpCost: number;
+  tpGain: number;
+  power: number;
+  description: string;
 };
 
 export type ActionType = "attack" | "skill" | "item" | "mitigate" | "flee";

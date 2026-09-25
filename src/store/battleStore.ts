@@ -1,6 +1,10 @@
 import { create } from "zustand";
-import type { Combatant } from "../core/types/schemas";
-import { physicalDamage, applyMitigation } from "../core/engine/combatMath";
+import type { Combatant, Move } from "../core/types/schemas";
+import {
+  physicalDamage,
+  magicalDamage,
+  applyMitigation,
+} from "../core/engine/combatMath";
 import { TurnManager } from "../core/engine/turnManager";
 import {
   getStatsForAge,
@@ -10,11 +14,9 @@ import {
 } from "../core/engine/lifeCurve";
 import heroData from "../data/heroes.json";
 import enemyData from "../data/enemies.json";
+import movesData from "../data/moves.json";
 
-const ATTACK_PCR_COST = 2;
-const SKILL_PCR_COST = 4;
-const SKILL_TP_COST = 3;
-const REST_TP_COST = 1;
+const MOVES: Record<string, Move> = movesData as Record<string, Move>;
 
 function makeCombatant(data: any): Combatant {
   const baseStats = { ...data.stats };
@@ -70,15 +72,14 @@ type Phase =
 type BattleState = {
   hero: Combatant;
   enemy: Combatant;
+  knownMoves: string[];
   phase: Phase;
   log: string[];
   turnManager: TurnManager;
   pendingEnemyDamage: number;
 
   init: () => void;
-  heroAttack: () => void;
-  heroSkill: () => void;
-  heroRest: () => void;
+  executeMove: (moveId: string) => void;
   heroMitigate: (tp: number) => void;
   skipMitigation: () => void;
   enemyTurn: () => void;
@@ -88,6 +89,7 @@ type BattleState = {
 export const useBattleStore = create<BattleState>((set, get) => ({
   hero: makeCombatant(heroData),
   enemy: makeCombatant(enemyData),
+  knownMoves: (heroData as any).knownMoves ?? [],
   phase: "hero_turn",
   log: [],
   turnManager: new TurnManager([
@@ -102,6 +104,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({
       hero,
       enemy,
+      knownMoves: (heroData as any).knownMoves ?? [],
       phase: "hero_turn",
       log: ["¡Comienza el combate!"],
       turnManager: new TurnManager([hero, enemy]),
@@ -131,101 +134,92 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     });
   },
 
-  heroAttack: () => {
+  executeMove: (moveId: string) => {
+    const move = MOVES[moveId];
+    if (!move) {
+      const { log } = get();
+      set({ log: [...log, `Movimiento desconocido: ${moveId}`] });
+      return;
+    }
+
     const { hero, enemy, log } = get();
-    if (hero.currentPcr < ATTACK_PCR_COST) {
-      set({ log: [...log, "Fatiga: PCr insuficiente para atacar."] });
+
+    // Validar costes
+    if (move.pcrCost > hero.currentPcr) {
+      set({ log: [...log, `PCr insuficiente para ${move.name}.`] });
+      return;
+    }
+    if (move.atpCost > hero.currentAtp) {
+      set({ log: [...log, `ATP insuficiente para ${move.name}.`] });
+      return;
+    }
+    if (move.tpCost > hero.currentTp) {
+      set({ log: [...log, `TP insuficiente para ${move.name}.`] });
       return;
     }
 
-    const dmg = physicalDamage(hero, enemy, 1);
-    const newTp = Math.min(hero.currentTp + 2, hero.maxTp);
-    const updatedEnemy = {
-      ...enemy,
-      currentHp: Math.max(0, enemy.currentHp - dmg),
-    };
-
-    set({
-      hero: {
-        ...hero,
-        currentTp: newTp,
-        currentPcr: hero.currentPcr - ATTACK_PCR_COST,
-      },
-      enemy: updatedEnemy,
-      log: [
-        ...log,
-        `${hero.name} ataca: ${dmg} daño. -${ATTACK_PCR_COST} PCr. +2 TP.`,
-      ],
-    });
-
-    if (updatedEnemy.currentHp <= 0) {
-      set({ phase: "victory", log: [...get().log, "¡Victoria!"] });
-      return;
-    }
-    get().enemyTurn();
-  },
-
-  heroSkill: () => {
-    const { hero, enemy, log } = get();
-    if (hero.currentPcr < SKILL_PCR_COST) {
-      set({ log: [...log, "Fatiga: PCr insuficiente para Corte Táctico."] });
-      return;
-    }
-    if (hero.currentTp < SKILL_TP_COST) {
-      set({ log: [...log, "TP insuficiente."] });
-      return;
-    }
-
-    const dmg = physicalDamage(hero, enemy, 2.5);
-    const updatedEnemy = {
-      ...enemy,
-      currentHp: Math.max(0, enemy.currentHp - dmg),
-    };
-
-    set({
-      hero: {
-        ...hero,
-        currentPcr: hero.currentPcr - SKILL_PCR_COST,
-        currentTp: hero.currentTp - SKILL_TP_COST,
-      },
-      enemy: updatedEnemy,
-      log: [
-        ...log,
-        `${hero.name} usa Corte Táctico: ${dmg} daño. -${SKILL_PCR_COST} PCr. -${SKILL_TP_COST} TP.`,
-      ],
-    });
-
-    if (updatedEnemy.currentHp <= 0) {
-      set({ phase: "victory", log: [...get().log, "¡Victoria!"] });
-      return;
-    }
-    get().enemyTurn();
-  },
-
-  heroRest: () => {
-    const { hero, log } = get();
-
-    const pr = pcrRegen(hero.stats.pcr);
-    const ar = atpRegen(hero.stats.atp);
-    const newPcr = Math.min(hero.stats.pcr, hero.currentPcr + pr);
-    const newAtp = Math.min(hero.stats.atp, hero.currentAtp + ar);
-    const newTp = Math.max(0, hero.currentTp - REST_TP_COST);
-
-    const updatedHero: Combatant = {
+    // Gastar recursos y ganar TP
+    let updatedHero: Combatant = {
       ...hero,
-      currentPcr: newPcr,
-      currentAtp: newAtp,
-      currentTp: newTp,
+      currentPcr: hero.currentPcr - move.pcrCost,
+      currentAtp: hero.currentAtp - move.atpCost,
+      currentTp: hero.currentTp - move.tpCost + move.tpGain,
     };
+
+    let updatedEnemy: Combatant = { ...enemy };
+    const newLog: string[] = [];
+
+    // Aplicar efecto según tipo
+    if (move.type === "physical") {
+      const dmg = physicalDamage(hero, enemy, move.element, move.power);
+      updatedEnemy.currentHp = Math.max(0, enemy.currentHp - dmg);
+      newLog.push(
+        `${hero.name} usa ${move.name}: ${dmg} daño. +${move.tpGain} TP.`
+      );
+    } else if (move.type === "magical") {
+      const dmg = magicalDamage(hero, enemy, move.element, move.power);
+      updatedEnemy.currentHp = Math.max(0, enemy.currentHp - dmg);
+      newLog.push(
+        `${hero.name} usa ${move.name}: ${dmg} daño. +${move.tpGain} TP.`
+      );
+    } else if (move.type === "support") {
+      if (move.id === "breath") {
+        const pr = pcrRegen(hero.stats.pcr);
+        const ar = atpRegen(hero.stats.atp);
+        updatedHero.currentPcr = Math.min(
+          hero.stats.pcr,
+          updatedHero.currentPcr + pr
+        );
+        updatedHero.currentAtp = Math.min(
+          hero.stats.atp,
+          updatedHero.currentAtp + ar
+        );
+        newLog.push(
+          `${hero.name} toma aliento: +${pr} PCr, +${ar} ATP, -${move.tpCost} TP.`
+        );
+      } else if (move.id === "focus") {
+        newLog.push(`${hero.name} se concentra: +${move.tpGain} TP.`);
+      } else {
+        newLog.push(`${hero.name} usa ${move.name}.`);
+      }
+    }
+
+    // Clamp TP entre 0 y maxTp
+    updatedHero.currentTp = Math.max(
+      0,
+      Math.min(updatedHero.maxTp, updatedHero.currentTp)
+    );
 
     set({
       hero: updatedHero,
-      log: [
-        ...log,
-        `${hero.name} toma aliento: +${pr} PCr, +${ar} ATP, -${REST_TP_COST} TP.`,
-      ],
+      enemy: updatedEnemy,
+      log: [...log, ...newLog],
     });
 
+    if (updatedEnemy.currentHp <= 0) {
+      set({ phase: "victory", log: [...get().log, "¡Victoria!"] });
+      return;
+    }
     get().enemyTurn();
   },
 
@@ -233,7 +227,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const { hero, enemy } = get();
     const log = [...get().log];
 
-    const rawDmg = physicalDamage(enemy, hero, 1);
+    const rawDmg = physicalDamage(enemy, hero, enemy.element, 1);
 
     set({
       phase: "mitigation_prompt",
