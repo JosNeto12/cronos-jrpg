@@ -1,4 +1,5 @@
 import type { PlayerProgress } from "./types/schemas";
+import { emptyBranchInvestment } from "./progression";
 
 const MOVE_ORDER_KEY = "cronos.moveOrder";
 const PROGRESS_KEY = "cronos.progress";
@@ -20,17 +21,13 @@ export function loadMoveOrder(): string[] | null {
 export function saveMoveOrder(order: string[]): void {
   try {
     localStorage.setItem(MOVE_ORDER_KEY, JSON.stringify(order));
-  } catch {
-    // ignorar
-  }
+  } catch {}
 }
 
 export function clearMoveOrder(): void {
   try {
     localStorage.removeItem(MOVE_ORDER_KEY);
-  } catch {
-    // ignorar
-  }
+  } catch {}
 }
 
 export function reconcileOrder(
@@ -57,7 +54,19 @@ export function loadProgress(): PlayerProgress | null {
       Array.isArray(parsed.knownMoves) &&
       typeof parsed.age === "number"
     ) {
-      return parsed as PlayerProgress;
+      // Normalizar campos nuevos por si el guardado es viejo
+      return {
+        vivencias: parsed.vivencias ?? 0,
+        seedsAvailable: parsed.seedsAvailable ?? 0,
+        age: parsed.age,
+        unlockedNodes: parsed.unlockedNodes,
+        knownMoves: parsed.knownMoves,
+        branchInvestment: parsed.branchInvestment ?? emptyBranchInvestment(),
+        driedBranches: parsed.driedBranches ?? [],
+        midlifeCrisisResolved: parsed.midlifeCrisisResolved ?? false,
+        warning45Shown: parsed.warning45Shown ?? false,
+        warning49Shown: parsed.warning49Shown ?? false,
+      };
     }
     return null;
   } catch {
@@ -68,15 +77,11 @@ export function loadProgress(): PlayerProgress | null {
 export function saveProgress(progress: PlayerProgress): void {
   try {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
-  } catch {
-    // ignorar
-  }
+  } catch {}
 }
 
 export function clearProgress(): void {
   try {
     localStorage.removeItem(PROGRESS_KEY);
-  } catch {
-    // ignorar
-  }
+  } catch {}
 }

@@ -3,6 +3,7 @@ import type {
   Combatant,
   Move,
   PlayerProgress,
+  SkillBranch,
 } from "../core/types/schemas";
 import {
   physicalDamage,
@@ -29,8 +30,12 @@ import {
   computeStatBonuses,
   applyStatBonuses,
   canBuyNode,
-  addVivencias,
-  FIGHTS_PER_YEAR,
+  emptyBranchInvestment,
+  evaluateMidlifeCrisis,
+  vivenciasForNextYear,
+  isMilestone,
+  isBranchUnlockedByAge,
+  MIDLIFE_CRISIS_AGE,
   MAX_AGE,
 } from "../core/progression";
 import heroData from "../data/heroes.json";
@@ -45,10 +50,14 @@ function defaultProgress(): PlayerProgress {
   return {
     vivencias: 0,
     seedsAvailable: 0,
-    winsAtCurrentAge: 0,
     age: HERO_DEFAULT_AGE,
     unlockedNodes: [],
     knownMoves: [...HERO_DEFAULT_MOVES],
+    branchInvestment: emptyBranchInvestment(),
+    driedBranches: [],
+    midlifeCrisisResolved: false,
+    warning45Shown: false,
+    warning49Shown: false,
   };
 }
 
@@ -146,6 +155,7 @@ type BattleState = {
   toggleSkillTree: () => void;
   buyNode: (nodeId: string) => void;
   resetProgress: () => void;
+  resolveMidlifeCrisis: (sacrifice: SkillBranch | null) => void;
 };
 
 const savedProgress = loadProgress() ?? defaultProgress();
@@ -190,17 +200,24 @@ export const useBattleStore = create<BattleState>((set, get) => {
       const check = canBuyNode(
         nodeId,
         progress.unlockedNodes,
-        progress.seedsAvailable
+        progress.seedsAvailable,
+        progress.age,
+        progress.driedBranches
       );
       if (!check.ok) {
         set({ log: [...log, `No puedes comprar: ${check.reason}`] });
         return;
       }
       const node = SKILL_NODES[nodeId];
+      const newInvestment = { ...progress.branchInvestment };
+      newInvestment[node.branch] =
+        (newInvestment[node.branch] ?? 0) + node.cost;
+
       const newProgress: PlayerProgress = {
         ...progress,
         seedsAvailable: progress.seedsAvailable - node.cost,
         unlockedNodes: [...progress.unlockedNodes, nodeId],
+        branchInvestment: newInvestment,
       };
 
       const newKnownMoves = [...progress.knownMoves];
@@ -226,6 +243,41 @@ export const useBattleStore = create<BattleState>((set, get) => {
         progress: newProgress,
         moveOrder: newOrder,
         log: [...log, `Árbol de Vida: desbloqueado ${node.name}.`],
+      });
+    },
+
+    resolveMidlifeCrisis: (sacrifice: SkillBranch | null) => {
+      const { progress, log } = get();
+      if (progress.midlifeCrisisResolved) return;
+
+      const { autoDried, selectable, safeguardBranch } =
+        evaluateMidlifeCrisis(progress.branchInvestment);
+
+      let dried = [...autoDried];
+      if (safeguardBranch) {
+        // Todas estaban bajo el umbral; salvamos la más invertida
+        dried = ALL_BRANCHES.filter((b) => b !== safeguardBranch);
+      } else if (sacrifice) {
+        dried.push(sacrifice);
+      } else if (selectable.length > 0) {
+        // No debería llegar aquí (la UI fuerza elegir)
+        return;
+      }
+
+      const newProgress: PlayerProgress = {
+        ...progress,
+        driedBranches: dried,
+        midlifeCrisisResolved: true,
+      };
+      saveProgress(newProgress);
+
+      const driedNames = dried.join(", ");
+      set({
+        progress: newProgress,
+        log: [
+          ...log,
+          `Crisis de mediana edad: las ramas de ${driedNames} se han secado.`,
+        ],
       });
     },
 
@@ -272,13 +324,8 @@ export const useBattleStore = create<BattleState>((set, get) => {
       });
     },
 
-    toggleMoveManager: () => {
-      set({ showMoveManager: !get().showMoveManager });
-    },
-
-    toggleSkillTree: () => {
-      set({ showSkillTree: !get().showSkillTree });
-    },
+    toggleMoveManager: () => set({ showMoveManager: !get().showMoveManager }),
+    toggleSkillTree: () => set({ showSkillTree: !get().showSkillTree }),
 
     executeMove: (moveId: string) => {
       const move = MOVES[moveId];
@@ -361,39 +408,57 @@ export const useBattleStore = create<BattleState>((set, get) => {
       if (updatedEnemy.currentHp <= 0) {
         const { progress } = get();
         const gained = (enemyData as any).vivencias ?? 0;
-        const result = addVivencias(
-          progress.vivencias,
-          progress.seedsAvailable,
-          gained
-        );
 
-        // Avance de edad por victorias
-        let newWins = progress.winsAtCurrentAge + 1;
-        let newAge = progress.age;
-        let ageLog = "";
-        if (newWins >= FIGHTS_PER_YEAR && newAge < MAX_AGE) {
-          newAge += 1;
-          newWins = 0;
-          ageLog = ` Has cumplido ${newAge} años.`;
+        // 1. Sumar Vivencias. Comprobar subida de edad.
+        let vivencias = progress.vivencias + gained;
+        let age = progress.age;
+        let seeds = progress.seedsAvailable;
+        const logs: string[] = [];
+
+        while (age < MAX_AGE) {
+          const needed = vivenciasForNextYear(age);
+          if (vivencias >= needed) {
+            vivencias -= needed;
+            age += 1;
+            logs.push(`Cronos cumple ${age} años.`);
+            if (isMilestone(age)) {
+              seeds += 1;
+              logs.push(`Hito alcanzado. +1 Semilla.`);
+            }
+          } else {
+            break;
+          }
+        }
+
+        // Avisos previos a la crisis
+        let w45 = progress.warning45Shown;
+        let w49 = progress.warning49Shown;
+        if (age >= 45 && !w45) {
+          logs.push(
+            "Cronos siente el peso del tiempo. Algunas ramas podrían no sobrevivir."
+          );
+          w45 = true;
+        }
+        if (age >= 49 && !w49) {
+          logs.push(
+            "A Cronos le queda poco para los 50. Una decisión se acerca."
+          );
+          w49 = true;
         }
 
         const newProgress: PlayerProgress = {
           ...progress,
-          vivencias: result.vivencias,
-          seedsAvailable: result.seedsAvailable,
-          winsAtCurrentAge: newWins,
-          age: newAge,
+          vivencias,
+          seedsAvailable: seeds,
+          age,
+          warning45Shown: w45,
+          warning49Shown: w49,
         };
         saveProgress(newProgress);
 
-        const victoryLog = [`¡Victoria! +${gained} Vivencias.${ageLog}`];
-        if (result.seedsGained > 0) {
-          victoryLog.push(`¡Has ganado ${result.seedsGained} Semilla(s)!`);
-        }
+        const victoryLog = [`¡Victoria! +${gained} Vivencias.`, ...logs];
 
-        // Reconstruir héroe si subió de edad
-        const rebuiltHero =
-          newAge !== progress.age ? buildHero(newProgress) : updatedHero;
+        const rebuiltHero = age !== progress.age ? buildHero(newProgress) : updatedHero;
 
         set({
           hero: rebuiltHero,
@@ -438,13 +503,11 @@ export const useBattleStore = create<BattleState>((set, get) => {
         set({ hero: updatedHero, phase: "defeat", pendingEnemyDamage: 0, log });
         return;
       }
-
       updatedHero = startTurn(updatedHero, log);
       if (updatedHero.currentHp <= 0) {
         set({ hero: updatedHero, phase: "defeat", pendingEnemyDamage: 0, log });
         return;
       }
-
       set({
         hero: updatedHero,
         phase: "hero_turn",
@@ -465,13 +528,11 @@ export const useBattleStore = create<BattleState>((set, get) => {
         set({ hero: updatedHero, phase: "defeat", pendingEnemyDamage: 0, log });
         return;
       }
-
       updatedHero = startTurn(updatedHero, log);
       if (updatedHero.currentHp <= 0) {
         set({ hero: updatedHero, phase: "defeat", pendingEnemyDamage: 0, log });
         return;
       }
-
       set({
         hero: updatedHero,
         phase: "hero_turn",

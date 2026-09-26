@@ -70,11 +70,17 @@ export type Action = {
   tpCost?: number;
 };
 
+export type BranchInvestment = Record<SkillBranch, number>;
+
 export type PlayerProgress = {
   vivencias: number;
   seedsAvailable: number;
-  winsAtCurrentAge: number;
   age: number;
   unlockedNodes: string[];
   knownMoves: string[];
+  branchInvestment: BranchInvestment;
+  driedBranches: SkillBranch[];
+  midlifeCrisisResolved: boolean;
+  warning45Shown: boolean;
+  warning49Shown: boolean;
 };
